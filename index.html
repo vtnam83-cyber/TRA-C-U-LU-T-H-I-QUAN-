@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ Thống Tra Cứu Văn Bản Pháp Quy - Hải Quan & Thuế</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
     <style>
-        /* Hiệu ứng mượt mà khi hover */
         .hover-row:hover { background-color: #f3f4f6; }
     </style>
 </head>
@@ -15,8 +15,8 @@
     <div class="max-w-7xl mx-auto bg-white rounded-lg shadow-lg p-8">
         
         <div class="text-center mb-8">
-            <h1 class="text-3xl font-bold text-blue-700 uppercase mb-2">Hệ Thống Tra Cứu Văn Bản Hải Quan & Thuế</h1>
-            <p class="text-gray-500">Tra cứu siêu tốc Nghị định, Thông tư và Công văn hướng dẫn nghiệp vụ (0ms)</p>
+            <h1 class="text-3xl font-bold text-blue-700 uppercase mb-2">Hệ Thống Tra Cứu Văn Bản Hải Quan</h1>
+            <p class="text-gray-500">Tra cứu siêu tốc Nghị định, Thông tư và Công văn hướng dẫn nghiệp vụ</p>
         </div>
 
         <div class="relative mb-6">
@@ -29,26 +29,18 @@
             </svg>
         </div>
 
-        <div class="flex flex-wrap gap-2 mb-6" id="filterButtons">
-            <button onclick="setFilter('Tất cả')" class="filter-btn bg-blue-600 text-white px-4 py-2 rounded-md font-medium transition">Tất cả</button>
-            <button onclick="setFilter('Nghị định')" class="filter-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition">Nghị định</button>
-            <button onclick="setFilter('Thông tư')" class="filter-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition">Thông tư</button>
-            <button onclick="setFilter('Công văn hướng dẫn')" class="filter-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition">Công văn hướng dẫn</button>
-            <button onclick="setFilter('Nghị quyết')" class="filter-btn bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md font-medium transition">Nghị quyết</button>
-        </div>
-
         <div class="mb-4 text-gray-600 font-medium italic" id="resultStats">
-            Đang tải dữ liệu...
+            Đang tải dữ liệu từ file Excel (CSV)...
         </div>
 
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-blue-100 text-blue-800 border-b-2 border-blue-200">
-                        <th class="p-4 font-semibold w-16">STT</th>
-                        <th class="p-4 font-semibold w-32">Số Hiệu</th>
+                        <th class="p-4 font-semibold w-12">STT</th>
+                        <th class="p-4 font-semibold w-32">Cơ Quan</th>
                         <th class="p-4 font-semibold w-32">Loại VB</th>
-                        <th class="p-4 font-semibold w-40">Cơ Quan</th>
+                        <th class="p-4 font-semibold w-32">Số Hiệu</th>
                         <th class="p-4 font-semibold">Trích Yếu & Từ Khóa</th>
                         <th class="p-4 font-semibold w-32">Tình Trạng</th>
                         <th class="p-4 font-semibold w-24 text-center">Chi Tiết</th>
@@ -61,140 +53,78 @@
     </div>
 
     <script>
-        // 1. CƠ SỞ DỮ LIỆU (Chuyển từ file Excel của bạn sang định dạng này)
-        const database = [
-            {
-                coQuan: "Chính Phủ",
-                loai: "Nghị định",
-                soHieu: "123/2020/NĐ-CP",
-                trichYeu: "Quy định về hóa đơn, chứng từ",
-                tinhTrang: "Còn hiệu lực",
-                link: "#"
-            },
-            {
-                coQuan: "Chính Phủ",
-                loai: "Nghị định",
-                soHieu: "37/2026/NĐ-CP",
-                trichYeu: "Nghị định quy định chi tiết về thủ tục hải quan, kiểm tra, giám sát hải quan...",
-                tinhTrang: "Còn hiệu lực",
-                link: "#"
-            },
-            {
-                coQuan: "Bộ Tài Chính",
-                loai: "Thông tư",
-                soHieu: "38/2015/TT-BTC",
-                trichYeu: "Quy định về thủ tục hải quan; kiểm tra, giám sát hải quan; thuế xuất khẩu, thuế nhập khẩu và quản lý thuế đối với hàng hoá xuất khẩu, nhập khẩu.",
-                tinhTrang: "Còn hiệu lực",
-                link: "#"
-            },
-            {
-                coQuan: "Tổng cục Hải quan",
-                loai: "Công văn hướng dẫn",
-                soHieu: "CV-01/TCHQ",
-                trichYeu: "Hướng dẫn phân loại mặt hàng Phân bón (Quy định phân loại Ure hạt đục/hạt trong, DAP, Kali, Lân; quy trình lấy mẫu; hoàn thuế...).",
-                tinhTrang: "Còn hiệu lực",
-                link: "#"
-            },
-            {
-                coQuan: "Tổng cục Hải quan",
-                loai: "Công văn hướng dẫn",
-                soHieu: "CV-02/TCHQ",
-                trichYeu: "Quy định thủ tục mở tờ khai vận chuyển độc lập, hàng quá cảnh cửa khẩu biên giới.",
-                tinhTrang: "Còn hiệu lực",
-                link: "#"
-            }
-        ];
+        let database = [];
 
-        let currentFilter = "Tất cả";
-
-        // Hàm xóa dấu tiếng Việt để tìm kiếm không phân biệt dấu
         function removeAccents(str) {
+            if (!str) return "";
             return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
         }
 
-        // 2. HÀM HIỂN THỊ BẢNG
-        function renderTable(data) {
-            const tbody = document.getElementById("tableBody");
-            tbody.innerHTML = ""; // Xóa dữ liệu cũ
+        // TỰ ĐỘNG ĐỌC FILE data.csv
+        Papa.parse("data.csv", {
+            download: true,
+            header: false, 
+            skipEmptyLines: true,
+            complete: function(results) {
+                // Bỏ qua dòng đầu tiên (dòng tiêu đề của Excel)
+                const rawData = results.data.slice(1);
+                
+                // Gắn 6 cột của Excel vào hệ thống
+                database = rawData.map(row => ({
+                    coQuan: row[0] || "",
+                    loai: row[1] || "",
+                    soHieu: row[2] || "",
+                    trichYeu: row[3] || "",
+                    tinhTrang: row[4] || "",
+                    link: row[5] || "#"
+                }));
+                
+                // Gọi hàm hiển thị sau khi đã tải xong dữ liệu
+                filterData();
+            },
+            error: function() {
+                document.getElementById("resultStats").innerHTML = "<span class='text-red-500'>Lỗi: Không tìm thấy file data.csv. Bạn đã tải file lên GitHub chưa?</span>";
+            }
+        });
 
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 font-medium">Không tìm thấy văn bản phù hợp. Vui lòng thử từ khóa khác!</td></tr>`;
+        // HÀM HIỂN THỊ VÀ TÌM KIẾM
+        function filterData() {
+            const startTime = performance.now();
+            const keyword = removeAccents(document.getElementById("searchInput").value);
+            
+            const filteredData = database.filter(item => {
+                const textToSearch = removeAccents(item.soHieu + " " + item.trichYeu + " " + item.loai + " " + item.coQuan);
+                return textToSearch.includes(keyword);
+            });
+
+            const tbody = document.getElementById("tableBody");
+            tbody.innerHTML = ""; 
+
+            if (filteredData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-red-500 font-medium">Không tìm thấy dữ liệu.</td></tr>`;
+                document.getElementById("resultStats").innerHTML = "";
                 return;
             }
 
-            data.forEach((item, index) => {
+            filteredData.forEach((item, index) => {
                 let row = `<tr class="border-b border-gray-200 hover-row transition">
                     <td class="p-4">${index + 1}</td>
-                    <td class="p-4 font-bold text-blue-700">${item.soHieu}</td>
-                    <td class="p-4">
-                        <span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">${item.loai}</span>
-                    </td>
                     <td class="p-4">${item.coQuan}</td>
+                    <td class="p-4"><span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-sm">${item.loai}</span></td>
+                    <td class="p-4 font-bold text-blue-700">${item.soHieu}</td>
                     <td class="p-4 text-gray-800">${item.trichYeu}</td>
-                    <td class="p-4">
-                        <span class="${item.tinhTrang === 'Còn hiệu lực' ? 'text-green-600' : 'text-red-600'} font-medium">
-                            ${item.tinhTrang}
-                        </span>
-                    </td>
+                    <td class="p-4"><span class="font-medium ${item.tinhTrang.includes('HẾT') ? 'text-red-600' : 'text-green-600'}">${item.tinhTrang}</span></td>
                     <td class="p-4 text-center">
-                        <a href="${item.link}" target="_blank" class="text-blue-600 hover:text-blue-800 underline flex justify-center items-center">
-                            <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            Xem
-                        </a>
+                        <a href="${item.link}" target="_blank" class="text-blue-600 hover:text-blue-800 underline">Xem</a>
                     </td>
                 </tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
-        }
 
-        // 3. HÀM TÌM KIẾM & LỌC (Siêu tốc 0ms)
-        function filterData() {
-            const startTime = performance.now(); // Bắt đầu tính giờ
-            
-            const keyword = removeAccents(document.getElementById("searchInput").value);
-            
-            const filteredData = database.filter(item => {
-                // Kiểm tra xem dữ liệu có khớp bộ lọc "Loại VB" không
-                const matchFilter = (currentFilter === "Tất cả") || (item.loai === currentFilter);
-                
-                // Kiểm tra xem từ khóa có nằm trong Số hiệu hoặc Trích yếu không
-                const textToSearch = removeAccents(item.soHieu + " " + item.trichYeu + " " + item.loai);
-                const matchKeyword = textToSearch.includes(keyword);
-
-                return matchFilter && matchKeyword;
-            });
-
-            renderTable(filteredData);
-
-            const endTime = performance.now(); // Kết thúc tính giờ
-            const timeTaken = (endTime - startTime).toFixed(1);
-
+            const endTime = performance.now();
             document.getElementById("resultStats").innerHTML = 
-                `Tìm thấy <strong class="text-blue-700">${filteredData.length}</strong> kết quả trong <strong>${timeTaken}ms</strong>`;
+                `Tìm thấy <strong class="text-blue-700">${filteredData.length}</strong> kết quả trong <strong>${(endTime - startTime).toFixed(1)}ms</strong>`;
         }
-
-        // 4. HÀM CHUYỂN ĐỔI BỘ LỌC (Nghị định / Thông tư...)
-        function setFilter(type) {
-            currentFilter = type;
-            
-            // Đổi màu nút để biết đang chọn nút nào
-            const buttons = document.querySelectorAll(".filter-btn");
-            buttons.forEach(btn => {
-                if(btn.innerText === type) {
-                    btn.classList.remove("bg-gray-200", "text-gray-700");
-                    btn.classList.add("bg-blue-600", "text-white");
-                } else {
-                    btn.classList.remove("bg-blue-600", "text-white");
-                    btn.classList.add("bg-gray-200", "text-gray-700");
-                }
-            });
-
-            // Gọi lại hàm tìm kiếm để cập nhật bảng
-            filterData();
-        }
-
-        // Chạy lần đầu tiên khi mở trang
-        filterData();
     </script>
 </body>
 </html>
